@@ -1,19 +1,18 @@
-baseURL = "http://example.org/" # IMPORTANT: Change this to your actual domain when deploying
+baseURL = "https://sbkandhasamy.com/"
 languageCode = "en-us"
-title = "SB Kandhasamy's Blog"
-theme = ""
+title = "SB Kandhasamy's Website"
 
 # Main menu configuration
 [menu]
   [[menu.main]]
     name = "Home"
     url = "/"
-    weight = 10 # Order in the menu
+    weight = 10
   [[menu.main]]
     name = "Profession"
-    url = "/skills/" # Assuming you'll have a content file at content/skills.md
+    url = "/skills/"
     weight = 20
   [[menu.main]]
     name = "Blogs"
-    url = "/blogs/" # This should point to the blog list page
+    url = "/blogs/"
     weight = 30
