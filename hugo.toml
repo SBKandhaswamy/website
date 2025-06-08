@@ -10,7 +10,7 @@ title = "SB Website"
     weight = 10
   [[menu.main]]
     name = "Profession"
-    url = "/skills/"
+    url = "/profession/"
     weight = 20
   [[menu.main]]
     name = "Blogs"
