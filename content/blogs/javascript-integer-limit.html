@@ -1,0 +1,171 @@
+---
+title: "The Curious Case of the Disappearing SMS: A JavaScript Type Coercion Gotcha"
+date: 2025-07-20
+draft: false
+---
+
+<div class="container justify-content-center">
+  <div class="row pt-5">
+    <div class="col">
+      <div class="heading">
+        <h1>
+          🧠 JavaScript, Integer Limits, and a Missing SMS: A Debugging Story
+        </h1>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Introduction</h3>
+          <p>
+            As a backend developer stepping into the world of JavaScript, I
+            recently had a debugging experience that was both frustrating and
+            enlightening. This blog is about how a simple data type mistake led
+            to an undelivered SMS - and how I discovered one of JavaScript’s
+            quirks in the process.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">📦 The Setup</h3>
+          <p>
+            I was building a JavaScript program to send SMS notifications using
+            a third-party SMS provider. Here’s how I structured it: 
+            <ul style="list-style-type:circle">
+                <li>
+                    <strong>Configuration File:</strong> Included SMS provider credentials and the template ID used for sending messages.
+                </li>
+                <li>
+                    <strong>Template ID:</strong> Each message to be sent needs a pre-approved template ID registered with the SMS provider.
+                </li>
+                <li>
+                    <strong>Functionality:</strong> Read the credentials and template ID from config, call the SMS API, and log the response.
+                </li>
+            </ul>
+            All seemed fine. I completed the implementation, tested it, and the SMS was delivered successfully. ✅
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🕵️ The Problem</h3>
+          <p>
+            The next day, I decided to run a test again. This time:
+            <ul style="list-style-type:circle">
+                <li>The SMS was sent to the provider (request was successful).</li>
+                <li>But the SMS was not delivered to the phone.</li>
+            </ul>
+            I checked the provider’s dashboard and logs. The response showed:
+            <br />
+            ❌ "Template not registered." But I had already registered the
+            template. And it was working the previous day!
+          </p>
+        </div>
+        
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🧩 The Mystery</h3>
+          <p>
+            I double-checked everything:
+            <ul style="list-style: none;">
+                <li>
+                    ✅ Template ID in configuration → Correct
+                </li>
+                <li>
+                    ✅ Registered in provider’s dashboard → Correct
+                </li>
+                <li>
+                    ✅ Code not changed since yesterday → Correct
+                </li>
+            </ul>
+            So, what went wrong?
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🔍 The Root Cause</h3>
+          <p>
+            I started debugging the actual request being sent. <br>
+            Here’s what I found:
+            <ul>
+                <li>
+                    <strong>Yesterday's working value</strong> was:<br>
+                    templateId: "1407169001234" // String
+                </li>
+                <li>
+                    <strong>Today's failing value</strong> was:<br>
+                     templateId: 1407169001234 // Integer
+                </li>
+            </ul>
+            The number looked the same, but here’s the catch: JavaScript has a limit for how big an integer can be accurately represented. 
+            The value I was passing (1407169001234) exceeds the safe integer limit in JavaScript.<br>
+            In JavaScript, the maximum safe integer is:<br>
+            Number.MAX_SAFE_INTEGER // 9007199254740991
+          </p>
+          <p>
+            If you go beyond that, JavaScript starts approximating, and the number gets silently altered. 
+            So, when I passed the template ID as an integer, JavaScript changed the actual value - leading to an invalid ID being sent to the provider.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">💡 The Lesson</h3>
+          <p>
+            This was a major “Aha!” moment for me.<br>
+            Always treat large numeric IDs (like template IDs, phone numbers, etc.) as strings, not numbers.
+            <strong>Why?</strong>
+            <ul>
+                <li>
+                    JavaScript <strong>cannot safely handle</strong> integers beyond a certain size.
+                </li>
+                <li>
+                    APIs often expect exact values.
+                </li>
+                <li>
+                    String representation keeps the value intact and precise.
+                </li>
+            </ul>
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">✅ Final Fix</h3>
+          <p>
+            I updated the config to wrap the template ID in quotes, like this:<br>
+            "templateId": "1407169001234" // String<br>
+            Re-tested, and voilà! SMS delivered 🎉
+          </p>
+        </div>
+
+         <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🪄 Takeaway for New JavaScript Developers</h3>
+          <p>
+            If you're from a strongly typed language background like C# or Java (like I am), JavaScript’s handling of numbers can surprise you. 
+            Here are some quick tips:<br>
+            <ul>
+                <li>
+                    Use typeof to verify the actual type at runtime.
+                </li>
+                <li>
+                    Treat any large numeric ID (like UIDs, phone numbers, etc.) as <strong>strings</strong>.
+                </li>
+                <li>
+                    Know the limits:<br>
+                    Number.MAX_SAFE_INTEGER === 9007199254740991
+                </li>
+            </ul>
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Final Thoughts</h3>
+          <p>
+            This may seem like a small issue, but it reminded me of how <strong> data types matter </strong> - especially in loosely typed languages.
+            I’m still early in my JavaScript journey, but this experience taught me to respect the quirks of the language.
+          </p>
+          <p>
+            I hope sharing this helps someone else avoid a few hours of head-scratching!
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
