@@ -87,15 +87,15 @@ draft: false
             <ul>
                 <li>
                     <strong>Yesterday's working value</strong> was:<br>
-                    templateId: "1407169001234" // String
+                    templateId: "1507100649629881791" // String
                 </li>
                 <li>
                     <strong>Today's failing value</strong> was:<br>
-                     templateId: 1407169001234 // Integer
+                     templateId: 1507100649629881791 // Integer
                 </li>
             </ul>
             The number looked the same, but here’s the catch: JavaScript has a limit for how big an integer can be accurately represented. 
-            The value I was passing (1407169001234) exceeds the safe integer limit in JavaScript.<br>
+            The value I was passing (1507100649629881791) exceeds the safe integer limit in JavaScript.<br>
             In JavaScript, the maximum safe integer is:<br>
             Number.MAX_SAFE_INTEGER // 9007199254740991
           </p>
@@ -129,7 +129,7 @@ draft: false
           <h3 class="pt-3" id="side-heading">✅ Final Fix</h3>
           <p>
             I updated the config to wrap the template ID in quotes, like this:<br>
-            "templateId": "1407169001234" // String<br>
+            "templateId": "1507100649629881791" // String<br>
             Re-tested, and voilà! SMS delivered 🎉
           </p>
         </div>
