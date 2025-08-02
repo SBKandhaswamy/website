@@ -1,0 +1,138 @@
+---
+title: "The Hidden Magic of .NET SDK-Style Project Files: What Changed Since .NET Framework 4.8"
+date: 2025-08-02
+draft: false
+---
+
+<div class="container justify-content-center">
+  <div class="row pt-5">
+    <div class="col">
+      <div class="heading">
+        <h1>
+          🗯️ The Hidden Magic of .NET SDK-Style Project Files: What Changed Since .NET Framework 4.8
+        </h1>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Introduction</h3>
+          <p>
+            Welcome to my trouble with .NET SDK. I am working with .NET 6.0 and above versions of projects and I am familiar with it.
+            But, ever opened an older .NET framework project <code>.csproj</code> file. When writing a project with .NET framework 4.8 first time, the coding feels normal with tiny deviation.
+            Project is build and ran correctly. Usually, I committed the relevant files into Github. The next day, it made me to feel what the hell is going on here.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🕵️ The Problem</h3>
+          <p>
+            The next day, when I was opened the project and try to build an application, it was failed. Visual studio is displaying that 
+            <code><u>Error : CS0246 : The type or namespace name 'Customer' could not be found (are you missing a using directive or an assembly reference?)</u></code>
+          </p>
+        </div>
+        
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🧩 The Mystery</h3>
+          <p>
+            I was checked the followings:
+            <ul style="list-style: none;">
+                <li>
+                    ✅ Is declared file name and namespace is correct → Yes
+                </li>
+                <li>
+                    ✅ Is it physically present under project directory → Yes
+                </li>
+            </ul>
+            Then what the hell is going on here?
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🔍 The Root Cause</h3>
+          <p>
+            Verified my project directory, all files are presenting correctly. I don’t have any other clue. Then I searched on the web regarding this.
+            Finally found that .NET framework project will use the files only which are included in <code>.csproj</code> If any other files are presents under the directory, the project don’t even consider that 💥.
+            Usually some cases, when building the project, the files will be included in <code>.csproj</code> file automatically. 
+            But, I did not saved and committed the <code>.csproj</code> file. That’s why, this is not displayed in the <code>.csproj</code> file and Visual Studio
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">💡 The Lesson</h3>
+          <p>
+            Then why I did not add anything like this in .NET 6.0 and above versions of projects <code>.csproj</code> file.
+            But, if any package references, some others, we have to add the entry. That’s clear.
+          </p>
+          <p>
+            Let’s come to the place to see, <strong>what is the hidden magic of .NET SDK-Style project files and what changed since .NET framework 4.8</strong>
+          </p>
+
+          <h4><strong>Traditional <code>.csproj</code></strong></h4>
+          <pre class="border border-start-0 border-end-0 rounded-end rounded-start p-2">
+            <code>
+&lt;Project&gt;
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+    .......
+    &lt;TargetFrameworkVersion&gt;vv4.8&lt;/TargetFrameworkVersion&gt;
+  &lt;/PropertyGroup&gt;
+  &lt;ItemGroup&gt;
+    &lt;Reference Include="System" /&gt;
+  &lt;/ItemGroup&gt;
+  &lt;ItemGroup&gt;
+      &lt;Compile&gt; Include="Models\Manager.cs" /&gt;
+    &lt;Compile&gt; Include="Models\Customer.cs" /&gt;
+    &lt;Compile&gt; Include="Models\Invoice.cs" /&gt;
+    &lt;Compile&gt; Include="Models\School.cs" /&gt;
+  &lt;/ItemGroup&gt;
+&lt;/Project&gt;
+            </code>
+          </pre>
+          <p>
+            This is the reason behind the issue, where the file is physically available but did not presents in Visual Studio. 
+            My point is that including all files is the terrible thing and hard to grasp project structure.
+          </p>
+
+          <h4><strong>Latest <code>.csproj</code></strong></h4>
+          <p>
+            Microsoft launched next version of .NET releases (.NET Core, .NET 5+, .NET 6+) with too many features, including the resolution for my trouble.
+            That is called <strong>Implicit Includes</strong>.
+          </p>
+          <pre class="border border-start-0 border-end-0 rounded-end rounded-start p-2">
+            <code>
+&lt;Project Sdk="Microsoft.NET.Sdk.WindowsDesktop"&gt; 
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;WinExe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net6.0-windows&lt;/TargetFramework&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+    &lt;UseWindowsForms&gt;true&lt;/UseWindowsForms&gt;
+  &lt;/PropertyGroup&gt;
+&lt;Project&gt;
+            </code>
+          </pre>
+          <p>
+            This looks simple and easier to manage. This single line will make project to consider all files which are under project directory. 
+            That’s awesome 🎇. 
+          </p>
+          <p>
+            But do not think that there will not be any work on <code>.csproj</code>. Definitely NO 😃. There will be a chance to edit <code>.csproj</code> file in such cases. 
+            For example, if you want to exclude some files and copy some files to the output directory, definitely you want to edit the <code>.csproj</code> file.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Final Thoughts</h3>
+          <p>
+           The missing entries in modern .NET project files are not a bug, they are a powerful feature designed to simplify development and reduce boilerplate. 
+           If you encounter issues like my .NET framework 4.8 experience, remember the explicit nature of <code>.csproj</code> file.
+          </p>
+          <p>
+            Happy Coding!! ☕.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
