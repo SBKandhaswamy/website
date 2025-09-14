@@ -1,0 +1,159 @@
+---
+title: "Amazon S3 Doesn’t Have Folders - Why Amazon S3 Showed Me Fake Folders"
+date: 2025-09-14
+draft: false
+---
+
+<div class="container justify-content-center">
+  <div class="row pt-5">
+    <div class="col">
+      <div class="heading">
+        <h1>
+          🌐 Amazon S3 Doesn’t Have Folders -Why Amazon S3 Showed Me Fake
+          Folders
+        </h1>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Introduction</h3>
+          <p>
+            From past three years, I have been using Amazon S3, Backblaze B2 and
+            Cloudflare R2 to store my files and data. I thought, everything is
+            smoothly working based on my understanding. But one day, while
+            listening AWS CLI, I realized: I didn’t really get it at all.
+          </p>
+          <p>
+            This blog is about how my confusion with folders and objects turned
+            into one of my most valuable lessons about object storage.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🌐 Object Storage at a Glance</h3>
+          <p>
+            Amazon, Backblaze and Cloudflare are providing the object storage
+            services. Everything is an object. All objects are stored into the
+            bucket. All objects are identified by their key. For example: Image
+            is an object. Key will be object name <code>sb-logo.png</code> or
+            <code>pictures/sb-logo.png</code>
+            There is no folder concept. Just objects with keys that may look
+            like folder path.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🔍 My Initial Confusion</h3>
+          <p>
+            I usually using tools like Filezilla, S3 Browser to manipulate my
+            objects. They are one more level intelligent on how to display the
+            objects in their UI. If my object is
+            <code>pictures/sb-logo.png</code>, it will show the
+            <code>sb-logo.png</code> object under the pictures directory. But
+            internally it is only one object. I accepted this until I listed my
+            objects by using AWS S3 CLI. That’s when my confusion started.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">
+            🧪 The Experiment That Changed My Mind
+          </h3>
+          <p>The followings are my actual objects which I uploaded into S3:</p>
+          <pre
+            class="border border-start-0 border-end-0 rounded-end rounded-start p-2"
+          >
+            <code>
+Kandhasamy/Images/website/author-logo.png
+Kandhasamy/Images/website/logo.png
+Kandhasamy/website/required.zip
+            </code>
+          </pre>
+          <p>But AWS S3 CLI listed the followings:</p>
+          <pre
+            class="border border-start-0 border-end-0 rounded-end rounded-start p-2"
+          >
+          <code>
+Kandhasamy/
+Kandhasamy/Images/
+Kandhasamy/Images//website/
+Kandhasamy/Images/website/author-logo.png
+Kandhasamy/Images/website/logo.png
+Kandhasamy/website/required.zip
+            </code>
+          </pre>
+          <p>
+            I shocked here why folders are listing as objects 😲. I decided to
+            identify the issue and tried the followings:
+          </p>
+          <p>
+            I created a folder called <code>foo</code> in Filezilla and uploaded
+            an image <code>logo.png</code>. I listed the object through AWS S3
+            CLI.
+          </p>
+          <pre
+            class="border border-start-0 border-end-0 rounded-end rounded-start p-2"
+          >
+            <code>
+foo/
+foo/logo.png
+            </code>
+          </pre>
+          <p>
+            When creating a folder in Filezilla, the client tool internally
+            uploading this fake folder as an object.
+          </p>
+          <p>
+            To confirm this, I uploaded the image file directly without creating
+            a folder in Filezilla. Then I listed the objects
+          </p>
+          <pre
+            class="border border-start-0 border-end-0 rounded-end rounded-start p-2"
+          >
+            <code>
+Kandhasamy/Images/mine.png
+            </code>
+          </pre>
+          <p>
+            CLI showed exactly that object. There is no fake folders. Then the
+            following points are verified carefully:
+          </p>
+          <ul style="list-style: disc">
+            <li>S3 don’t care about folders.</li>
+            <li>
+              Some intelligent client tools are creating a folder as an invalid
+              objects.
+            </li>
+            <li>
+              <strong
+                >Tool like MinIO is smart. To avoid this confusion, they don’t
+                let us to create a folder without uploading a file.</strong
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">✅ Takeaway for Developers</h3>
+          <p>
+            If you are working on S3, B2 or R2, I would like to follow the
+            followings:
+          </p>
+          <ul style="list-style: disc">
+            <li>Learn core concepts first</li>
+            <li>
+              Don’t rely only on client tool like Filezilla or S3 Browser - they
+              are convenient but can cause misconceptions.
+            </li>
+            <li>Always verify using the AWS CLI or SDK’s</li>
+          </ul>
+          <p>
+            At the end of the day, everything is just an object with a key.
+            That’s the beauty and simplicity of object storage.
+          </p>
+          <p>Happy Coding!! ☕.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
