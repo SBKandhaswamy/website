@@ -1,0 +1,114 @@
+---
+title: "Building .NET Projects in Debug Doesn’t Mean Running in Development"
+date: 2025-12-20
+draft: false
+---
+
+<div class="container justify-content-center">
+  <div class="row pt-5">
+    <div class="col">
+      <div class="heading">
+        <h1>
+          ⚠️ Building .NET Projects in Debug Doesn’t Mean Running in Development
+        </h1>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Introduction</h3>
+          <p>
+            When I started to using command lines wherever its possible on my journey of software, I got striked that one of my understanding
+            is wrong about .NET Environments and Build Configuration. When try to go one step ahead on my way of working, it is leading to learn deeply.
+            By this way only I got clarified about .NET Environment and Build Configuration.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🕵️ Initial My Understanding about dotnet build command: What I expected</h3>
+          <p>
+            When I executed the dotnet build command and saw all my DLL files move into the <code>bin/Debug/net8.0/</code> folder, 
+            I felt confident. In my mind, because the build was successful and located in the "Debug" directory, 
+            the application was "marked" as a development version.
+          </p>
+          <p>
+            I expected that when I executed the DLL directly from that folder, the application would automatically realize it was in Development mode.
+            I assumed it would naturally pick up my configuration.Development.json and start writing logs to the console as I had configured. 
+            To me, "Debug Build" and "Development Environment" were the same thing, if the files were in the Debug folder, the app should act like it’s in development.
+          </p>
+        </div>
+        
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🧩 Final understanding about Build configuration and environment</h3>
+          <p>
+            As I moved further into my command-line journey, I learned that these two concepts are actually decoupled. 
+            I found that the <strong>Build Configuration</strong> (Debug or Release) only decides how the code is compiled and where it is stored. 
+            It does not control the <strong>Hosting Environment</strong>.
+          </p>
+          <p>
+            The "striking" realization was that when we run a .NET application via the command line, it doesn't care about which folder the DLL is sitting in.
+            Instead, the runtime looks for an environment variable called ASPNETCORE_ENVIRONMENT. 
+            If we don't explicitly set this variable to "Development," .NET defaults to its "Production" mode for safety.
+          </p>
+          <p>
+            I finally understood that my IDE (Visual Studio) was doing a lot of "magic" for me behind the scenes using <code>launchSettings.json.</code>
+            Once I stepped out into the command line, I realized I had to manually tell the runtime which environment to use. 
+            Now, I know that even a Debug build can run in a "Production" state if the environment variables aren't handled correctly.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🔍 The Bridge Between Build and Run</h3>
+          <p>
+            To summarize the deep learning I gained, we must look at these two distinct stages:
+            <ul style="list-style: none;">
+              <li>
+                <p>
+                  <strong>Build Time</strong> (-c Debug/Release): This happens when you run <code>dotnet build</code>.
+                  It determines if your code is optimized for performance (Release) or includes extra info for debugging (Debug). 
+                  It simply places the files in a folder.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Run Time</strong> (ASPNETCORE_ENVIRONMENT): This happens the moment you start the DLL. 
+                  The application ignores the folder name and looks at the OS environment variables. 
+                  If you don't tell it otherwise, it assumes it is in <strong>Production</strong> to keep things secure.
+            </ul>
+            <p>
+              If you are working on Ubuntu or any command line, you can bridge this gap by setting the environment manually before running your app:
+            <ul style="list-style: none;">
+              <li>
+                <p><strong>Command:</strong> <code>export ASPNETCORE_ENVIRONMENT=Development</code></p>
+              </li>
+              <li>
+                <p><strong>Then run:</strong> <code>dotnet bin/Debug/net8.0/Project.dll</code></p>
+              </li>
+            </ul>
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">👋 Conclusion: My Journey to Deeper Understanding</h3>
+          <p>
+           Stepping away from the "magic" of the Visual Studio "Play" button was a challenge, 
+           but it was the best way to truly see how .NET works under the hood. 
+           By choosing to use the command line, I was forced to face the gap between my expectations and the actual behavior of the framework. 
+          </p>
+          <p>
+            This journey taught me that in software, things are often more decoupled than they appear. 
+            A folder name like /Debug is just a location, not a command to the runtime. 
+            I am glad I took this "one step ahead" in my way of working, as it turned a simple build error into a fundamental understanding of .NET architecture.
+          </p>
+          <p>
+            If you are also moving from IDEs to the CLI, 
+            remember: don't just trust the folder path—always check your environment variables!
+          </p>
+          <p>
+            Happy Coding!! ☕.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
