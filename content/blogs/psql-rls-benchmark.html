@@ -1,0 +1,441 @@
+---
+title: "Does PostgreSQL RLS Policy Design Impact Performance? Benchmarks Reveal the Truth"
+date: 2025-12-27
+draft: false
+---
+
+<div class="container justify-content-center">
+  <div class="row pt-5">
+    <div class="col">
+      <div class="heading">
+        <h1>
+          💡 Does PostgreSQL RLS Policy Design Impact Performance? Benchmarks Reveal the Truth
+        </h1>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">✨ Introduction</h3>
+          <p>
+            Row Level Security (RLS) is a powerful PostgreSQL feature that helps enforce data isolation directly at the database layer.
+          </p>
+          <p>
+            When implementing RLS, one common question often arises that should we use a single policy with multiple conditions, or split the logic into multiple policies?
+            While both approaches are functionally correct, their performance characteristics are rarely discussed in official documentation. 
+            This raises curiosity, does policy structure actually matter?
+          </p>
+          <p>
+            In this blog, I will go with real world scenaio and performance tests in both cases.
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🧩 Begin with Real Scenario</h3>
+          <p>
+            I have a scenario where I have a multi-client database. 
+            Current situation is that all client data sits in one database with RLS enabled by against client id. 
+            This will restrict a client data to others.
+          </p>
+          <p>
+            Every table has a client_id column as reference, secured by RLS policies. Branches table and bills table also has client_id with RLS. 
+            Now there is a new requirement comes from the client is that the branch manager can view their branch bills only.
+          </p>
+          <p>
+            Client expectation is simple is that they want a screen that should have the way to assign the managers to branch. By this way, their branches bills only should be shown to the managers.
+            On backend, how we are going to acheive this in DB level, the same way how we are already restricting the client wise data.
+          </p>
+          <p>
+            PostgreSQL has the policy, as we know already, that will make our effort as simpler. 
+            Introducing one more policy against bills table and that should restrict other branches data. 
+            Branches will be filtered on policy, based on who logged in.
+            Now bills table should have the following policies:
+            <ul style="list-style: disc;">
+              <li>One for client restriction</li>
+              <li>One for branch restriction</li>
+            </ul>
+            <strong>Question:</strong> Already there is a policy running against bills table. Now, Do I want to create a one more policy or should alter the existing policy which includes branch restrictions?
+            Which way to choose? Does PostgreSQL doc is detailing about this? No. Doc is silent on which one to choose
+            to get better performance and maintainability.
+          </p>
+        </div>
+        
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🕵️ Benchmark Experiment</h3>
+          <p>
+            I was impressed to find out the performance difference between those two way of policies. 
+            Hence, I choose the Benchmark Dotnet to make the comparison.
+          </p>
+          <h5>Database Setup:</h5>
+          <p>The benchmark database contains three schemas with identical structure and data.
+             Row Level Security (RLS) is enabled in all schemas.  
+            Only the <strong>policy structure</strong> differs between them.
+          </p>
+          <details>
+            <summary><strong>Current Schema (Existing Implementation)</strong></summary><br>
+
+            <p>RLS is applied using a single condition per table.</p>
+
+            <details>
+              <summary>Clients Table</summary>
+      <pre>
+<code>ALTER TABLE current.clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY current_clients_isolation_policy
+    ON current.clients
+    USING (id = current_clientid);</code></pre>
+            </details>
+
+            <details>
+              <summary>Branches Table</summary>
+              <pre>
+<code>ALTER TABLE current.branches ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY current_branches_isolation_policy
+    ON current.branches
+    USING (client_id = current_clientid);</code></pre>
+            </details>
+
+            <details>
+              <summary>Bills Table</summary>
+              <pre>
+<code>ALTER TABLE current.bills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY current_bills_isolation_policy
+    ON current.bills
+    USING (client_id = current_clientid);</code></pre>
+            </details>
+          </details>
+
+          <details>
+            <summary><strong>Approach 1 (Multiple Policies)</strong></summary><br>
+            <p>
+          Bills table uses multiple policies to apply client and branch isolation separately.
+          </p>
+
+            <details>
+              <summary>Clients Table</summary>
+              <pre>
+<code>ALTER TABLE approach1.clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY approach1_clients_isolation_policy
+    ON approach1.clients
+    USING (id = current_clientid);</code></pre>
+            </details>
+
+            <details>
+              <summary>Branches Table</summary>
+              <pre>
+<code>ALTER TABLE approach1.branches ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY approach1_branches_isolation_policy
+    ON approach1.branches
+    USING (client_id = current_clientid);</code></pre>
+            </details>
+
+            <details>
+              <summary>Bills Table</summary>
+              <pre>
+<code>ALTER TABLE approach1.bills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY approach1_bills_client_policy
+    ON approach1.bills
+    USING (client_id = current_clientid);
+
+CREATE POLICY approach1_bills_branch_policy
+    ON approach1.bills
+    USING (
+    branch_id = ANY (
+      SELECT branch_id
+      FROM approach1.branchwiseusers
+      WHERE user_id = current_userid
+        AND is_manager = true
+    ));</code></pre>
+            </details>
+          </details>
+
+          <details>
+            <summary><strong>Approach 2 (Single Policy with Combined Conditions)</strong></summary><br>
+
+            <p>
+          Bills table uses a single policy that combines client and branch conditions.
+          </p>
+
+            <details>
+              <summary>Clients Table</summary>
+              <pre>
+<code>ALTER TABLE approach2.clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY approach2_clients_isolation_policy
+    ON approach2.clients
+    USING (id = current_clientid);</code></pre>
+            </details>
+
+            <details>
+              <summary>Branches Table</summary>
+              <pre>
+<code>ALTER TABLE approach2.branches ENABLE ROW LEVEL SECURITY;
+      
+CREATE POLICY approach2_branches_isolation_policy
+    ON approach2.branches
+    USING (client_id = current_clientid);</code></pre>
+            </details>
+
+            <details>
+              <summary>Bills Table</summary>
+              <pre>
+<code>ALTER TABLE approach2.bills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY approach2_bills_isolation_policy
+    ON approach2.bills
+    USING (
+      client_id = current_clientid
+      AND branch_id = ANY (
+      SELECT branch_id
+      FROM approach1.branchwiseusers
+      WHERE user_id = current_userid
+      AND is_manager = true)
+    );
+              </code></pre>
+            </details>
+          </details>
+          <h5>Benchmark Structure:</h5>
+          <p>
+            To isolate the impact of Row Level Security (RLS) policy design, the benchmark was intentionally kept simple and consistent across all scenarios:
+            <ul style="list-style: disc;">
+              <li>Simple query</li>
+              <p>
+                A single-table lookup on bills using COUNT(*).
+                This represents a typical OLTP-style (Online Transaction Processing) query where RLS predicates are evaluated row-by-row.
+              </p>
+              <li>Complex query</li>
+              <p>
+                A multi-table query joining Clients → Branches → Bills, combined with date filtering and aggregation (COUNT + SUM).
+                This reflects a realistic reporting workload where RLS is evaluated across multiple relations within a single execution plan.
+              </p>
+            </ul>
+          </p>
+          <p>
+            Across all runs, the following were held constant:
+            <ul style="list-style: disc;">
+              <li>Same database instance</li>
+              <li>Same data distribution</li>
+              <li>Same session variables (current_clientid, current_userid)</li>
+              <li>Identical SQL shape<br>
+The only difference was the RLS policy structure.</li>
+              </ul>
+          </p>
+          <details>
+              <summary>C# Program</summary>
+          <pre class="border rounded-end rounded-start p-1">
+<code class="language-csharp">using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
+using Dapper;
+using Npgsql;
+using System.Data.Common;
+
+[SimpleJob(RuntimeMoniker.Net80)]
+[MemoryDiagnoser]
+public class ClientBranchBillRlsBenchmark
+{
+    private const string ConnectionString =
+        "Host=localhost;Port=5432;Database=benchmark_test;Username=benchmark;Password=benchmark";
+
+    /*
+     * SCHEMAS & RLS DESIGN
+     * -------------------
+     *
+     * current
+     *  - Bills: single RLS predicate (client_id)
+     *
+     * approach1
+     *  - Bills: multiple RLS policies
+     *      - client_id isolation
+     *      - branch_id isolation via branchwiseusers
+     *
+     * approach2
+     *  - Bills: single RLS policy with combined predicates
+     *      - client_id AND branch_id
+     */
+
+    // ---------------------------------
+    // SIMPLE QUERY (Bills only)
+    // ---------------------------------
+
+    [Benchmark(Description = "Current - Bills (single RLS condition)")]
+    public int Current_Bills_Simple()
+        => ExecuteScalar("SELECT count(*) FROM current.bills");
+
+    [Benchmark(Description = "Approach1 - Bills (multiple RLS policies)")]
+    public int Approach1_Bills_Simple()
+        => ExecuteScalar("SELECT count(*) FROM approach1.bills");
+
+    [Benchmark(Description = "Approach2 - Bills (combined RLS condition)")]
+    public int Approach2_Bills_Simple()
+        => ExecuteScalar("SELECT count(*) FROM approach2.bills");
+
+    /*
+    * COMPLEX QUERY
+    * -------------
+    * JOIN: Clients → Branches → Bills
+    * AGGREGATION: COUNT + SUM
+    * Purpose: Exercise multi-table RLS evaluation in a single query
+    */
+
+    [Benchmark(Description = "Current - Complex Join + Aggregation")]
+    public (int BillCount, decimal TotalAmount) Current_ComplexQuery()
+        => ExecuteQuery(@"
+            SELECT
+                COUNT(*)      AS billcount,
+                COALESCE(SUM(bi.amount), 0) AS totalamount
+            FROM current.clients c
+            JOIN current.branches b ON b.client_id = c.id
+            JOIN current.bills bi ON bi.branch_id = b.id
+            WHERE bi.bill_date &gt;= now() - interval '1 day'
+        ");
+
+    [Benchmark(Description = "Approach1 - Complex Join + Aggregation")]
+    public (int BillCount, decimal TotalAmount) Approach1_ComplexQuery()
+        => ExecuteQuery(@"
+            SELECT
+                COUNT(*)      AS billcount,
+                COALESCE(SUM(bi.amount), 0) AS totalamount
+            FROM approach1.clients c
+            JOIN approach1.branches b ON b.client_id = c.id
+            JOIN approach1.bills bi ON bi.branch_id = b.id
+            WHERE bi.bill_date &gt;= now() - interval '1 day'
+        ");
+
+    [Benchmark(Description = "Approach2 - Complex Join + Aggregation")]
+    public (int BillCount, decimal TotalAmount) Approach2_ComplexQuery()
+        => ExecuteQuery(@"
+            SELECT
+                COUNT(*)      AS billcount,
+                COALESCE(SUM(bi.amount), 0) AS totalamount
+            FROM approach2.clients c
+            JOIN approach2.branches b ON b.client_id = c.id
+            JOIN approach2.bills bi ON bi.branch_id = b.id
+            WHERE bi.bill_date &gt;= now() - interval '1 day'
+        ");
+
+    // ---------------------------------
+    // Shared helpers
+    // ---------------------------------
+
+    private int ExecuteScalar(string sql)
+    {
+        using var conn = CreateConnection();
+        return conn.ExecuteScalar&lt;int&gt;(sql);
+    }
+
+    private (int, decimal) ExecuteQuery(string sql)
+    {
+        using var conn = CreateConnection();
+        return conn.QuerySingle&lt;(int, decimal)&gt;(sql);
+    }
+
+    private DbConnection CreateConnection()
+    {
+        var dataSource = new NpgsqlDataSourceBuilder(ConnectionString).Build();
+        var conn = dataSource.CreateConnection();
+
+        conn.Open();
+
+        // RLS session context
+        conn.Execute("SET current_clientid = 1");
+        conn.Execute("SET current_userid = 267");
+
+        return conn;
+    }
+}</code></pre>
+          </details>
+          <h5>Benchmark Result:</h5>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Mean</th>
+                  <th>Error</th>
+                  <th>StdDev</th>
+                  <th>Median</th>
+                  <th>Allocated</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Current: Simple Query</td>
+                  <td>72.77 ms</td>
+                  <td>5.162 ms</td>
+                  <td>15.14 ms</td>
+                  <td>68.28 ms</td>
+                  <td>306.39 KB</td>
+                </tr>
+                <tr>
+                  <td>Approach1: Simple Query</td>
+                  <td>71.19 ms</td>
+                  <td>6.207 ms</td>
+                  <td>18.30 ms</td>
+                  <td>68.77 ms</td>
+                  <td>306.39 KB</td>
+                </tr>
+                <tr>
+                  <td>Approach2: Simple Query</td>
+                  <td>67.97 ms</td>
+                  <td>6.006 ms</td>
+                  <td>17.23 ms</td>
+                  <td>71.26 ms</td>
+                  <td>306.43 KB</td>
+                </tr>
+                <tr>
+                  <td>Current: Complex Query</td>
+                  <td>249.36 ms</td>
+                  <td>8.551 ms</td>
+                  <td>24.81 ms</td>
+                  <td>245.05 ms</td>
+                  <td>389.84 KB</td>
+                </tr>
+                <tr>
+                  <td>Approach1: Complex Query</td>
+                  <td>258.85 ms</td>
+                  <td>8.845 ms</td>
+                  <td>25.66 ms</td>
+                  <td>260.25 ms</td>
+                  <td>390.02 KB</td>
+                </tr>
+                <tr>
+                  <td>Approach2: Complex Query</td>
+                  <td>255.68 ms</td>
+                  <td>7.725 ms</td>
+                  <td>22.66 ms</td>
+                  <td>258.28 ms</td>
+                  <td>390.02 KB</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="note">
+            <strong>Result Summary</strong><br>
+            <p>
+              There is no significant performance difference between using a single RLS policy
+              with multiple conditions and using multiple policies per condition.
+              Execution time and memory allocation remain largely consistent across all approaches.
+            </p>
+          </div>
+
+        </div>
+
+        <div class="col-12 col-lg-9">
+          <h3 class="pt-3" id="side-heading">🎉 Conclusion</h3>
+          <p>
+            No matter which approach we choose, the benchmark results make one thing clear that there’s no meaningful performance difference between the two. 
+            And now it all makes sense… that’s probably why the PostgreSQL documentation stays happily silent on this case 😄
+          </p>
+          <p>
+            Happy Coding!! ☕.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -332,3 +332,60 @@ i {
 .expertise-section li {
   line-height: 1.6;
 }
+
+code {
+  font-family: Consolas, Monaco, "Courier New", monospace;
+}
+
+details {
+  margin: 14px 0;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+}
+
+details[open] {
+  background: #4d657a;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #d1d5db;
+  padding: 10px;
+  text-align: right;
+}
+
+th {
+  background: #111827;
+  color: #ffffff;
+}
+
+td:first-child, th:first-child {
+  text-align: left;
+}
+
+.note {
+  background: #4a90ec;
+  border-left: 4px solid #06b6d4;
+  padding: 12px;
+  margin-top: 20px;
+  border-radius: 4px;
+}
