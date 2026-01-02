@@ -30,6 +30,9 @@ body {
   background: -webkit-linear-gradient(to center, #13042b, #2f183b);
   background: linear-gradient(to center, #13042b, #2f183b);
   color: white;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 p {
@@ -266,9 +269,10 @@ i {
 }
 
 .footer {
-  bottom: 0;
+  margin-top: auto;
   width: 100%;
-  height: 100px;
+  height: auto;
+  padding-bottom: 10px;
   text-align: center;
   background: #f6f6f6;
 }
@@ -385,4 +389,9 @@ td:first-child, th:first-child {
   padding: 12px;
   margin-top: 20px;
   border-radius: 4px;
+}
+
+.form-switch {
+  display: flex;
+  justify-content: flex-end;
 }

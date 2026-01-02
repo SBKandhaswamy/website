@@ -2,11 +2,11 @@
 {{ define "title" }}{{ .Title }} - {{ .Site.Title }}{{ end }}
 
 {{ partial "header.html" . }}
-{{ partial "navbar.html" . }}
 <body>
+{{ partial "navbar.html" . }}
 
 <main>
-    <div class="container">
+    <div class="container pb-5">
         <div class="row pt-5">
             <div class="heading">
                 <h1>{{ .Title }}</h1>
@@ -14,6 +14,7 @@
         </div>
 
         <div class="row">
+            <div class="col-12">
             <div class="list-group">
                 {{ range .Pages.ByDate.Reverse }}
                     <a href="{{ .RelPermalink }}" class="list-group-item">
@@ -26,6 +27,7 @@
                         {{ end }} -->
                     </a>
                 {{ end }}
+            </div>
             </div>
             {{/* Optional: Add pagination if you have many posts */}}
             {{/* {{ partial "pagination.html" . }} */}}
