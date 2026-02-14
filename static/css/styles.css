@@ -76,8 +76,24 @@ p {
 }
 
 .img-right {
-  float: right;
-  margin-left: 25px;
+  float: none;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* For medium screens and above - align to right */
+@media (min-width: 768px) {
+  .img-right {
+    float: right;
+    margin-left: 25px;
+    margin-right: 0;
+    margin-bottom: 0;
+    display: inline;
+  }
 }
 
 
